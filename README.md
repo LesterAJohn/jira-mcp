@@ -266,7 +266,7 @@ curl -i http://127.0.0.1:3000/mcp \
 
 ## HTTPS Deployment Choice
 
-This repository uses option 2 (recommended): terminate TLS at a reverse proxy or load balancer.
+This repository uses a reverse proxy (recommended): terminate TLS at a reverse proxy or load balancer.
 
 - Keep this app on internal HTTP.
 - Enforce HTTPS, client allowlists, and edge-level controls at the proxy/LB.

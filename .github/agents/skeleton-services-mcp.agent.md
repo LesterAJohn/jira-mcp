@@ -29,6 +29,9 @@ Current skeleton capabilities to preserve:
 - Vault Agent integration pattern for auto-auth and token renewal, including app-readable token sink support.
 - Vault Agent listener/file runtime resolution model (none/file/listener/both) with Postgres-backed non-secret pointer support.
 - Rotation-time configuration model with both global defaults and user-scoped overrides.
+- Vault Raft persistence in local and production compose stacks.
+- Managed unseal key resolution flow (`VAULT_UNSEAL_KEY` -> `src/config/vault.unseal.key.json` -> generated key).
+- Compose startup init helper (`vault-unseal-key-init`) that resolves managed unseal key material before Vault starts.
 
 Always start by reviewing:
 - [README.md](README.md)
@@ -72,6 +75,7 @@ Required implementation workflow:
 16. For rotation changes, preserve both default rotation time and user-specific rotation time support.
 17. Update README.md so new tools and environment variables are documented.
 18. Run npm test before finishing and summarize changes with file paths.
+19. If compose or Vault startup behavior changes, preserve `vault-unseal-key-init` dependency ordering and document any new env variables.
 
 Guardrails:
 - Do not remove or weaken redaction behavior.

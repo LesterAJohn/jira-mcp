@@ -16,6 +16,7 @@ INIT_KEYS_OUT=""
 SKIP_EXPORT=0
 SKIP_IMPORT=0
 SKIP_INIT=0
+UNSEAL_KEY_PATH="src/config/vault.unseal.key.json"
 
 usage() {
   cat <<'EOF'
@@ -32,6 +33,7 @@ Options:
   --skip-export              Do not export secrets from dev Vault
   --skip-import              Do not import exported secrets into prod Vault
   --skip-init                Skip vault operator init/unseal/login (already initialized)
+  --unseal-key-path <path>   Unseal key JSON path (default: src/config/vault.unseal.key.json)
   --init-keys-out <path>     File path where init keys and root token are stored (mode 600)
   -h, --help                 Show this help
 
@@ -109,6 +111,10 @@ while [[ $# -gt 0 ]]; do
       SKIP_INIT=1
       shift
       ;;
+    --unseal-key-path)
+      UNSEAL_KEY_PATH="$2"
+      shift 2
+      ;;
     --init-keys-out)
       INIT_KEYS_OUT="$2"
       shift 2
@@ -125,6 +131,7 @@ done
 
 need_cmd docker
 need_cmd jq
+need_cmd node
 
 mkdir -p "$EXPORT_DIR"
 
@@ -138,6 +145,40 @@ run_in_container() {
     -e VAULT_ADDR="$VAULT_ADDR" \
     -e VAULT_TOKEN="$token" \
     "$VAULT_CONTAINER_NAME" "$@"
+}
+
+read_vault_status() {
+  docker exec -e VAULT_ADDR="$VAULT_ADDR" "$VAULT_CONTAINER_NAME" vault status -format=json
+}
+
+is_vault_initialized() {
+  read_vault_status | jq -e '.initialized == true' >/dev/null 2>&1
+}
+
+is_vault_sealed() {
+  read_vault_status | jq -e '.sealed == true' >/dev/null 2>&1
+}
+
+resolve_managed_unseal_key_no_create() {
+  local output
+  output="$(node "$ROOT_DIR/scripts/vault-unseal-key.js" --json --path "$ROOT_DIR/$UNSEAL_KEY_PATH" --no-create)"
+  jq -r '.key' <<<"$output"
+}
+
+persist_managed_unseal_key() {
+  local key="$1"
+  node "$ROOT_DIR/scripts/vault-unseal-key.js" --path "$ROOT_DIR/$UNSEAL_KEY_PATH" --set "$key" >/dev/null
+  log "Persisted Vault unseal key to: $UNSEAL_KEY_PATH"
+}
+
+unseal_with_managed_key() {
+  local key
+  key="$(resolve_managed_unseal_key_no_create)"
+
+  [[ -n "$key" ]] || fail "Vault is sealed but no managed key was found. Set VAULT_UNSEAL_KEY or populate $UNSEAL_KEY_PATH"
+
+  log "Unsealing Vault with managed key"
+  docker exec -e VAULT_ADDR="$VAULT_ADDR" "$VAULT_CONTAINER_NAME" vault operator unseal "$key" >/dev/null
 }
 
 wait_for_vault() {
@@ -223,32 +264,39 @@ start_prod_vault() {
 
 init_unseal_login() {
   if [[ "$SKIP_INIT" -eq 1 ]]; then
-    log "Skipping init/unseal/login by request"
+    log "Skipping init by request"
+    if is_vault_sealed; then
+      unseal_with_managed_key
+    fi
     return
   fi
 
-  log "Initializing Vault"
-  local init_json
-  init_json="$(docker exec -e VAULT_ADDR="$VAULT_ADDR" "$VAULT_CONTAINER_NAME" vault operator init -format=json)"
+  if ! is_vault_initialized; then
+    log "Initializing Vault"
+    local init_json
+    init_json="$(docker exec -e VAULT_ADDR="$VAULT_ADDR" "$VAULT_CONTAINER_NAME" vault operator init -format=json -key-shares=1 -key-threshold=1)"
 
-  if [[ -n "$INIT_KEYS_OUT" ]]; then
-    umask 177
-    printf '%s\n' "$init_json" >"$INIT_KEYS_OUT"
-    log "Wrote init keys and root token to: $INIT_KEYS_OUT"
+    if [[ -n "$INIT_KEYS_OUT" ]]; then
+      umask 177
+      printf '%s\n' "$init_json" >"$INIT_KEYS_OUT"
+      log "Wrote init keys and root token to: $INIT_KEYS_OUT"
+    fi
+
+    local key1 root_token
+    key1="$(jq -r '.unseal_keys_b64[0]' <<<"$init_json")"
+    root_token="$(jq -r '.root_token' <<<"$init_json")"
+
+    persist_managed_unseal_key "$key1"
+    log "Unsealing Vault"
+    docker exec -e VAULT_ADDR="$VAULT_ADDR" "$VAULT_CONTAINER_NAME" vault operator unseal "$key1" >/dev/null
+
+    DEV_TOKEN="$root_token"
+    return
   fi
 
-  local key1 key2 key3 root_token
-  key1="$(jq -r '.unseal_keys_b64[0]' <<<"$init_json")"
-  key2="$(jq -r '.unseal_keys_b64[1]' <<<"$init_json")"
-  key3="$(jq -r '.unseal_keys_b64[2]' <<<"$init_json")"
-  root_token="$(jq -r '.root_token' <<<"$init_json")"
-
-  log "Unsealing Vault"
-  docker exec -e VAULT_ADDR="$VAULT_ADDR" "$VAULT_CONTAINER_NAME" vault operator unseal "$key1" >/dev/null
-  docker exec -e VAULT_ADDR="$VAULT_ADDR" "$VAULT_CONTAINER_NAME" vault operator unseal "$key2" >/dev/null
-  docker exec -e VAULT_ADDR="$VAULT_ADDR" "$VAULT_CONTAINER_NAME" vault operator unseal "$key3" >/dev/null
-
-  DEV_TOKEN="$root_token"
+  if is_vault_sealed; then
+    unseal_with_managed_key
+  fi
 }
 
 enable_kv_mount_if_needed() {

@@ -135,6 +135,7 @@ Vault:
 - VAULT_AGENT_TOKEN_FILE_PATH
 - VAULT_AGENT_LISTENER_ENABLED
 - VAULT_AGENT_LISTENER_ADDR
+- VAULT_UNSEAL_KEY
 - VAULT_KV_MOUNT
 - VAULT_WRITE_RETRY_ATTEMPTS
 - VAULT_WRITE_RETRY_BASE_DELAY_MS
@@ -147,9 +148,17 @@ Reference values are in [.env.example](.env.example).
 1. Install dependencies.
 2. Copy .env.example to .env.
 3. Start local services with docker compose up -d.
-4. Seed a test secret in Vault.
-5. Start the MCP server with npm start.
-6. Run tests with npm test.
+4. Resolve the managed unseal key: `npm run vault:unseal-key -- --json`.
+5. Initialize and unseal local Vault (first run):
+
+```bash
+docker exec -e VAULT_ADDR=http://127.0.0.1:8200 skeleton-mcp-vault vault operator init -key-shares=1 -key-threshold=1 -format=json
+docker exec -e VAULT_ADDR=http://127.0.0.1:8200 skeleton-mcp-vault vault operator unseal <unseal_key_from_init_or_env>
+```
+
+6. Seed a test secret in Vault.
+7. Start the MCP server with npm start.
+8. Run tests with npm test.
 
 ### Test Coverage Notes
 
@@ -326,7 +335,15 @@ The repository now includes a Vault production migration scaffold under [vault-p
 - [vault-production/docker-compose.vault-prod.yml](vault-production/docker-compose.vault-prod.yml): Compose definition for Vault in server mode (non-dev).
 - [vault-production/scripts/convert-dev-to-prod.sh](vault-production/scripts/convert-dev-to-prod.sh): Script to export dev KV data, start Raft Vault, initialize/unseal, and import secrets.
 - [vault-production/scripts/bootstrap-post-conversion.sh](vault-production/scripts/bootstrap-post-conversion.sh): Script to enable audit, write policy, configure AppRole, and emit service credentials.
+- [scripts/vault-unseal-key.js](scripts/vault-unseal-key.js): Script to resolve unseal key from `VAULT_UNSEAL_KEY` or `src/config/vault.unseal.key.json`.
 - [vault-production/README.md](vault-production/README.md): Detailed migration notes and options.
+
+Managed unseal key flow:
+
+- `VAULT_UNSEAL_KEY` is optional and can be injected at runtime.
+- If `VAULT_UNSEAL_KEY` is not set, `npm run vault:unseal-key` reads `src/config/vault.unseal.key.json`.
+- If the key file is missing or empty, a 24-character key is generated and saved to `src/config/vault.unseal.key.json`.
+- Both compose stacks run a one-shot `vault-unseal-key-init` service before Vault startup to ensure key material exists.
 
 Run the conversion:
 
@@ -345,6 +362,9 @@ bash vault-production/scripts/convert-dev-to-prod.sh --skip-export --skip-import
 
 # Use when Raft Vault is already initialized
 bash vault-production/scripts/convert-dev-to-prod.sh --skip-init
+
+# Explicitly set key file path used by convert script
+bash vault-production/scripts/convert-dev-to-prod.sh --unseal-key-path src/config/vault.unseal.key.json
 
 # Post-conversion hardening bootstrap (audit, policy, AppRole)
 bash vault-production/scripts/bootstrap-post-conversion.sh --vault-token <root_or_admin_token>
@@ -410,5 +430,6 @@ Production migration tests in [tests/vault-production.test.js](tests/vault-produ
 
 ## Notes
 
-- Vault runs in dev mode in docker-compose.yml and is not production-safe.
+- docker-compose.yml now runs Vault with Raft-backed storage for local persistence.
+- The managed key script is an automation helper and not a Vault KMS/HSM auto-unseal backend.
 - The migration scaffold starts with bootstrap-friendly defaults and still requires TLS, production auth methods, and credential rotation before real production use.

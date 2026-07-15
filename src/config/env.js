@@ -149,6 +149,7 @@ export const env = {
   vault: {
     endpoint: required("VAULT_ADDR", "http://127.0.0.1:8200"),
     token: required("VAULT_TOKEN", "root"),
+    unsealKey: process.env.VAULT_UNSEAL_KEY ?? "",
     agentEnabled: booleanValue("VAULT_AGENT_ENABLED", false),
     agentAuthMode: vaultAgentAuthMode,
     agentTokenFilePath: process.env.VAULT_AGENT_TOKEN_FILE_PATH ?? "",

@@ -1,4 +1,15 @@
 services:
+  vault-unseal-key-init:
+    image: node:20
+    container_name: skeleton-mcp-vault-unseal-key-init
+    restart: "no"
+    working_dir: /app
+    command: sh -c "npm run vault:unseal-key -- --json"
+    environment:
+      VAULT_UNSEAL_KEY: ${VAULT_UNSEAL_KEY:-}
+    volumes:
+      - ./:/app
+
   postgres:
     image: postgres:16
     container_name: skeleton-mcp-postgres
@@ -17,14 +28,19 @@ services:
     image: hashicorp/vault:1.18
     container_name: skeleton-mcp-vault
     restart: unless-stopped
+    depends_on:
+      vault-unseal-key-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./src/config/vault.dev.hcl:/vault/config/vault.hcl:ro
+      - vault_dev_raft_data:/vault/data
     ports:
       - "8200:8200"
     environment:
-      VAULT_DEV_ROOT_TOKEN_ID: root
-      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+      VAULT_UNSEAL_KEY: ${VAULT_UNSEAL_KEY:-}
     cap_add:
       - IPC_LOCK
-    command: vault server -dev
+    command: vault server -config=/vault/config/vault.hcl
 
   mcp-http:
     image: node:20
@@ -78,3 +94,4 @@ services:
 
 volumes:
   postgres_data:
+  vault_dev_raft_data:

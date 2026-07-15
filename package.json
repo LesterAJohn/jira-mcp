@@ -11,6 +11,7 @@
     "start:stdio": "node src/index.js",
     "start:http": "node src/http/index.js",
     "start:both": "node src/start-both.js",
+    "vault:unseal-key": "node scripts/vault-unseal-key.js",
     "test": "node --test tests/**/*.test.js"
   },
   "engines": {

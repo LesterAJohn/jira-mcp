@@ -40,6 +40,8 @@ Use this template to describe a service integration request.
 - Redaction expectations:
 - Audit requirements:
 - Secret storage location (Vault path and shape):
+- Managed unseal key source (`VAULT_UNSEAL_KEY` vs file fallback) expectations:
+- Startup helper requirements (`vault-unseal-key-init` and compose ordering):
 
 ## Data Model
 

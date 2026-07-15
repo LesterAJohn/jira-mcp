@@ -10,6 +10,8 @@ const scriptPath = path.join(vaultProdDir, "scripts", "convert-dev-to-prod.sh");
 const bootstrapScriptPath = path.join(vaultProdDir, "scripts", "bootstrap-post-conversion.sh");
 const configPath = path.join(vaultProdDir, "config", "vault.hcl");
 const composePath = path.join(vaultProdDir, "docker-compose.vault-prod.yml");
+const devComposePath = path.join(rootDir, "docker-compose.yml");
+const unsealKeyScriptPath = path.join(rootDir, "scripts", "vault-unseal-key.js");
 
 test("vault-production scaffold files exist", () => {
   assert.equal(fs.existsSync(vaultProdDir), true);
@@ -17,6 +19,7 @@ test("vault-production scaffold files exist", () => {
   assert.equal(fs.existsSync(bootstrapScriptPath), true);
   assert.equal(fs.existsSync(configPath), true);
   assert.equal(fs.existsSync(composePath), true);
+  assert.equal(fs.existsSync(unsealKeyScriptPath), true);
 });
 
 test("vault production config uses raft storage", () => {
@@ -31,8 +34,23 @@ test("vault production config uses raft storage", () => {
 test("prod compose runs vault in config mode and not dev mode", () => {
   const compose = fs.readFileSync(composePath, "utf8");
 
+  assert.match(compose, /vault-unseal-key-init:/);
+  assert.match(compose, /npm\s+run\s+vault:unseal-key\s+--\s+--json/);
+  assert.match(compose, /depends_on:\s*[\s\S]*vault-unseal-key-init:\s*[\s\S]*service_completed_successfully/);
   assert.match(compose, /vault\s+server\s+-config=\/vault\/config\/vault\.hcl/);
   assert.doesNotMatch(compose, /vault\s+server\s+-dev/);
+});
+
+test("dev compose uses raft-backed vault persistence", () => {
+  const compose = fs.readFileSync(devComposePath, "utf8");
+
+  assert.match(compose, /vault-unseal-key-init:/);
+  assert.match(compose, /npm\s+run\s+vault:unseal-key\s+--\s+--json/);
+  assert.match(compose, /depends_on:\s*[\s\S]*vault-unseal-key-init:\s*[\s\S]*service_completed_successfully/);
+  assert.match(compose, /\.\/src\/config\/vault\.dev\.hcl:\/vault\/config\/vault\.hcl:ro/);
+  assert.match(compose, /vault_dev_raft_data:\/vault\/data/);
+  assert.match(compose, /vault\s+server\s+-config=\/vault\/config\/vault\.hcl/);
+  assert.match(compose, /VAULT_UNSEAL_KEY:/);
 });
 
 test("conversion script help is available and documents migration flow", () => {
@@ -77,4 +95,16 @@ test("bootstrap script has valid bash syntax", () => {
   });
 
   assert.ok(true);
+});
+
+test("vault unseal key helper script provides help text", () => {
+  const output = execFileSync("node", [unsealKeyScriptPath, "--help"], {
+    cwd: rootDir,
+    encoding: "utf8"
+  });
+
+  assert.match(output, /Usage:/);
+  assert.match(output, /--json/);
+  assert.match(output, /--set/);
+  assert.match(output, /--no-create/);
 });

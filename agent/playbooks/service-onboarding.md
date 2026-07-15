@@ -55,4 +55,7 @@ Use this checklist when adapting the skeleton for a new service.
 
 - Update README tool catalog and environment variable docs.
 - If infra changes are required, update compose files and migration assets.
+- Preserve Vault Raft persistence in both local and production compose definitions when Vault settings are touched.
+- Preserve startup init flow that resolves managed key material before Vault starts (`vault-unseal-key-init`).
+- Keep `VAULT_UNSEAL_KEY` and `src/config/vault.unseal.key.json` behavior aligned with docs when unseal workflows are touched.
 - Keep production hardening notes explicit.

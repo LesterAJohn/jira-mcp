@@ -6,6 +6,14 @@ description: "Adapt this skeleton into an MCP for a specific service with env co
 
 Use the Skeleton Services MCP Configurator agent to implement a service integration in this repository.
 
+Documentation links to treat as source of truth:
+
+- [README.md](README.md)
+- [agent/playbooks/service-onboarding.md](agent/playbooks/service-onboarding.md)
+- [agent/templates/service-spec.md](agent/templates/service-spec.md)
+- [vault-production/README.md](vault-production/README.md)
+- [src/config/env.js](src/config/env.js)
+
 Collect and use this service spec:
 
 - Service name:
@@ -41,6 +49,12 @@ Implementation requirements:
 14. Add tests in tests/*.test.js for happy path, auth failures, redaction behavior, and transport behavior when touched.
 15. Update README.md tool catalog and env variable docs.
 16. Run npm test and report results.
+
+Documentation freshness requirements:
+
+1. Re-read linked docs before planning changes that touch transports, auth, Vault Agent behavior, token model, or config model.
+2. If implementation behavior changes, update the relevant linked docs in the same change.
+3. Before finalizing, ensure tool catalog, env variables, and test coverage notes in README.md match the code.
 
 Constraints:
 

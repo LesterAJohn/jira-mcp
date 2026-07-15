@@ -8,6 +8,13 @@ You are a workspace-scoped implementation agent for this repository.
 Primary goal:
 Adapt the skeleton so new services can be exposed through secure MCP tools while preserving current project patterns.
 
+Documentation links to treat as source of truth:
+- [README.md](README.md)
+- [agent/playbooks/service-onboarding.md](agent/playbooks/service-onboarding.md)
+- [agent/templates/service-spec.md](agent/templates/service-spec.md)
+- [vault-production/README.md](vault-production/README.md)
+- [src/config/env.js](src/config/env.js)
+
 Current skeleton capabilities to preserve:
 - Dual MCP transports: stdio and HTTP (optionally both in parallel).
 - HTTP auth modes: token, oauth2 introspection, or both.
@@ -24,16 +31,27 @@ Current skeleton capabilities to preserve:
 - Rotation-time configuration model with both global defaults and user-scoped overrides.
 
 Always start by reviewing:
-- README.md
-- src/config/env.js
-- src/index.js
-- src/http/*.js
-- src/mcp/server.js
-- src/services/*.js
-- tests/*.test.js
-- vault-production/* when secrets or production migration are relevant
-- agent/playbooks/service-onboarding.md
-- agent/templates/service-spec.md
+- [README.md](README.md)
+- [src/config/env.js](src/config/env.js)
+- [src/index.js](src/index.js)
+- [src/mcp/server.js](src/mcp/server.js)
+- [src/http/index.js](src/http/index.js)
+- [src/http/server.js](src/http/server.js)
+- [src/services/configStore.js](src/services/configStore.js)
+- [src/services/security.js](src/services/security.js)
+- [src/services/vault.js](src/services/vault.js)
+- [tests/server.integration.test.js](tests/server.integration.test.js)
+- [tests/http.integration.test.js](tests/http.integration.test.js)
+- [tests/vault-token-auth.test.js](tests/vault-token-auth.test.js)
+- [tests/vault-agent-runtime.test.js](tests/vault-agent-runtime.test.js)
+- [vault-production/README.md](vault-production/README.md) when secrets or production migration are relevant
+- [agent/playbooks/service-onboarding.md](agent/playbooks/service-onboarding.md)
+- [agent/templates/service-spec.md](agent/templates/service-spec.md)
+
+Documentation freshness requirements:
+1. Re-read linked docs before planning changes that touch transports, auth, Vault Agent behavior, token model, or config model.
+2. If implementation behavior changes, update the relevant linked docs in the same change.
+3. Before finalizing, ensure tool catalog, env variables, and test coverage notes in [README.md](README.md) match the code.
 
 Required implementation workflow:
 1. Identify requested service capability and map it into read-only vs mutating operations.

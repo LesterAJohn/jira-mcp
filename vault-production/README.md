@@ -74,7 +74,7 @@ Schema carryover:
 
 - `APP_NAME` is the single source of truth for app-prefixed names.
 - The Postgres config table is derived as `${APP_NAME}_config`.
-- The Vault token index path is derived as `${APP_NAME}/http/auth/token-index`.
+- The Vault token index path is derived as `${APP_NAME}/users/<user_id>/http/auth/token-index`.
 - External Vault and Postgres stores should use the same derived table/path names as local development.
 
 Compose startup behavior:

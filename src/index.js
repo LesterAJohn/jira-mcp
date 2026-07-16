@@ -1,7 +1,7 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { env } from "./config/env.js";
 import { createMcpServer } from "./mcp/server.js";
-import { TeslaMateClient } from "./services/teslamate.js";
+import { TargetServiceClient } from "./services/targetService.js";
 
 async function main() {
   if (env.transport.mode === "http") {
@@ -14,12 +14,12 @@ async function main() {
     return;
   }
 
-  const teslamateClient = new TeslaMateClient(env.teslamate);
+  const targetServiceClient = new TargetServiceClient(env.targetService);
 
   const server = createMcpServer({
     name: env.mcpServerName,
     version: env.mcpServerVersion,
-    teslamateClient
+    serviceClient: targetServiceClient
   });
 
   const transport = new StdioServerTransport();

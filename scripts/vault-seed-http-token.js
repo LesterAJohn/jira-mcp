@@ -4,7 +4,7 @@ import { VaultService } from "../src/services/vault.js";
 import {
   createBearerToken,
   createVaultTokenEntry,
-  getVaultTokenIndexPath,
+  getVaultUserTokenIndexPath,
   mergeVaultTokenIndex,
   normalizeAppName
 } from "../src/config/vaultAuthTokenIndex.js";
@@ -130,7 +130,8 @@ function parseBooleanEnv(value, fallback = false) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const appName = normalizeAppName(process.env.APP_NAME ?? "skeleton");
-  const indexPath = args.path || process.env.MCP_HTTP_VAULT_TOKEN_INDEX_PATH || getVaultTokenIndexPath(appName);
+  const indexPath =
+    args.path || process.env.MCP_HTTP_VAULT_TOKEN_INDEX_PATH || getVaultUserTokenIndexPath(appName, args.userId);
   const token = createBearerToken();
   const expiresAt = parseOptionalExpiresAt(args.expiresAt);
   const tokenId = args.tokenId || "";

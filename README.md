@@ -198,7 +198,7 @@ Postgres:
 
 Postgres config model:
 
-- Configuration data is multi-user scoped in `skeleton_config` using composite key `(user_id, key)`.
+- Configuration data is app-scoped in `${APP_NAME}_config` and user-scoped with composite key `(user_id, key)`.
 - MCP config tools accept optional `userId`; when omitted, `MCP_CONFIG_DEFAULT_USER_ID` is used.
 - Seed records include:
 	- `default/sample.feature`
@@ -226,7 +226,7 @@ Naming defaults:
 
 - `APP_NAME` defaults to `skeleton`.
 - The Postgres config table defaults to `${APP_NAME}_config`.
-- The Vault token index path defaults to `${APP_NAME}/http/auth/token-index`.
+- The Vault token index path defaults to `${APP_NAME}/users/${MCP_HTTP_VAULT_TOKEN_DEFAULT_USER_ID}/http/auth/token-index`.
 - Set only `APP_NAME` to rename the app-scoped Vault/Postgres schema across local and external stores.
 
 Reference values are in [.env.example](.env.example).
@@ -316,6 +316,7 @@ HTTP transport security controls:
 ### Vault Multi-User Token Model
 
 Store HTTP bearer tokens in Vault at `MCP_HTTP_VAULT_TOKEN_INDEX_PATH`.
+If unset, seeding tools default to `${APP_NAME}/users/<user_id>/http/auth/token-index`.
 
 Default-user fallback behavior:
 
@@ -392,6 +393,11 @@ The same capability is exposed as an MCP tool for controlled setup workflows:
 
 - `vault_seed_http_token`: generate a bearer token and store it in the Vault HTTP token index for a user.
 - `vault_seed_oauth_token`: store a provided OAuth access token in the Vault HTTP token index for a user.
+
+For both tools, include app/user scope in requests so clients can reason about target storage:
+
+- `appName` determines app-level namespace defaults.
+- `userId` determines user-level namespace under `${APP_NAME}/users/<user_id>/...`.
 
 The tool requires `authorizationKey` when `MCP_ADMIN_AUTH_KEY` is configured.
 

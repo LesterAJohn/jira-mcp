@@ -25,7 +25,7 @@ function setEnv(updates) {
   };
 }
 
-function createTeslaMateClientMock() {
+function createServiceClientMock() {
   const calls = {
     suspend: 0,
     resume: 0,
@@ -76,18 +76,18 @@ async function invokeTool(server, name, args = {}) {
   return { result, payload };
 }
 
-test("teslamate_health_check returns ok", async () => {
+test("service_health_check returns ok", async () => {
   const restoreEnv = setEnv({ MCP_ADMIN_AUTH_KEY: "" });
 
   try {
-    const { client } = createTeslaMateClientMock();
+    const { client } = createServiceClientMock();
     const server = createMcpServer({
-      name: "teslamate-mcp",
+      name: "skeleton-mcp",
       version: "0.1.0",
-      teslamateClient: client
+      serviceClient: client
     });
 
-    const { payload } = await invokeTool(server, "teslamate_health_check");
+    const { payload } = await invokeTool(server, "service_health_check");
 
     assert.equal(payload.ok, true);
     assert.equal(payload.status, 200);
@@ -97,38 +97,38 @@ test("teslamate_health_check returns ok", async () => {
   }
 });
 
-test("mutating TeslaMate tools require authorizationKey when admin key is configured", async () => {
+test("mutating service tools require authorizationKey when admin key is configured", async () => {
   const restoreEnv = setEnv({ MCP_ADMIN_AUTH_KEY: "super-secret" });
 
   try {
-    const { client, calls } = createTeslaMateClientMock();
+    const { client, calls } = createServiceClientMock();
     const server = createMcpServer({
-      name: "teslamate-mcp",
+      name: "skeleton-mcp",
       version: "0.1.0",
-      teslamateClient: client
+      serviceClient: client
     });
 
-    const unauthorized = await invokeTool(server, "teslamate_suspend_logging", {
+    const unauthorized = await invokeTool(server, "service_suspend_logging", {
       carId: 1
     });
     assert.equal(unauthorized.result.isError, true);
     assert.equal(unauthorized.payload.status, 401);
 
-    const authorized = await invokeTool(server, "teslamate_suspend_logging", {
+    const authorized = await invokeTool(server, "service_suspend_logging", {
       carId: 1,
       authorizationKey: "super-secret"
     });
     assert.equal(authorized.payload.ok, true);
     assert.equal(calls.suspend, 1);
 
-    const genericUnauthorized = await invokeTool(server, "teslamate_api_request", {
+    const genericUnauthorized = await invokeTool(server, "service_api_request", {
       method: "POST",
       path: "/api/car/1/logging/suspend"
     });
     assert.equal(genericUnauthorized.result.isError, true);
     assert.equal(genericUnauthorized.payload.status, 401);
 
-    const genericAuthorized = await invokeTool(server, "teslamate_api_request", {
+    const genericAuthorized = await invokeTool(server, "service_api_request", {
       method: "POST",
       path: "/api/car/1/logging/suspend",
       authorizationKey: "super-secret"

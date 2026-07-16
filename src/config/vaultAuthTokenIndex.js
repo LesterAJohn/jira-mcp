@@ -23,8 +23,16 @@ export function normalizeAppName(appName) {
   return String(appName ?? "skeleton").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-") || "skeleton";
 }
 
+export function normalizeUserIdForPath(userId) {
+  return String(userId ?? "default").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-") || "default";
+}
+
 export function getVaultTokenIndexPath(appName) {
   return `${normalizeAppName(appName)}/http/auth/token-index`;
+}
+
+export function getVaultUserTokenIndexPath(appName, userId) {
+  return `${normalizeAppName(appName)}/users/${normalizeUserIdForPath(userId)}/http/auth/token-index`;
 }
 
 export function createBearerToken({ byteLength = 32 } = {}) {

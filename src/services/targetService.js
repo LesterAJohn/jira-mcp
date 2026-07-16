@@ -32,7 +32,7 @@ function parseResponseBody(contentType, text) {
   return text;
 }
 
-export class TeslaMateClient {
+export class TargetServiceClient {
   constructor({
     baseUrl,
     timeoutMs = DEFAULT_TIMEOUT_MS,
@@ -49,15 +49,15 @@ export class TeslaMateClient {
     this.basicPassword = String(basicPassword ?? "");
 
     if (!["none", "bearer", "basic"].includes(this.authMode)) {
-      throw new Error("TESLAMATE_AUTH_MODE must be one of: none, bearer, basic");
+      throw new Error("TARGET_SERVICE_AUTH_MODE must be one of: none, bearer, basic");
     }
 
     if (this.authMode === "bearer" && !this.bearerToken) {
-      throw new Error("TESLAMATE_BEARER_TOKEN is required when TESLAMATE_AUTH_MODE=bearer");
+      throw new Error("TARGET_SERVICE_BEARER_TOKEN is required when TARGET_SERVICE_AUTH_MODE=bearer");
     }
 
     if (this.authMode === "basic" && !this.basicUsername) {
-      throw new Error("TESLAMATE_BASIC_USERNAME is required when TESLAMATE_AUTH_MODE=basic");
+      throw new Error("TARGET_SERVICE_BASIC_USERNAME is required when TARGET_SERVICE_AUTH_MODE=basic");
     }
   }
 
@@ -74,18 +74,10 @@ export class TeslaMateClient {
 
   listKnownEndpoints() {
     return [
-      { method: "GET", path: "/health_check", description: "TeslaMate process health endpoint" },
-      { method: "PUT", path: "/api/car/:id/logging/suspend", description: "Suspend logging for car id" },
-      { method: "PUT", path: "/api/car/:id/logging/resume", description: "Resume logging for car id" },
-      { method: "GET", path: "/drive/:id/gpx", description: "Export a drive as GPX" },
-      { method: "GET", path: "/", description: "Main TeslaMate web app page" },
-      { method: "GET", path: "/sign_in", description: "Sign in page" },
-      { method: "GET", path: "/settings", description: "Settings page" },
-      { method: "GET", path: "/geo-fences", description: "Geo-fences page" },
-      { method: "GET", path: "/geo-fences/new", description: "Geo-fence create page" },
-      { method: "GET", path: "/geo-fences/:id/edit", description: "Geo-fence edit page" },
-      { method: "GET", path: "/charge-cost/:id", description: "Charge cost page" },
-      { method: "GET", path: "/import", description: "Import page" }
+      { method: "GET", path: "/health_check", description: "Target service health endpoint" },
+      { method: "PUT", path: "/api/car/:id/logging/suspend", description: "Suspend logging for resource id" },
+      { method: "PUT", path: "/api/car/:id/logging/resume", description: "Resume logging for resource id" },
+      { method: "GET", path: "/drive/:id/gpx", description: "Export a drive as GPX" }
     ];
   }
 
@@ -134,7 +126,7 @@ export class TeslaMateClient {
       const parsed = parseResponseBody(contentType, text);
 
       if (!response.ok) {
-        const error = new Error(`TeslaMate request failed: ${upperMethod} ${url.pathname} -> ${response.status}`);
+        const error = new Error(`Target service request failed: ${upperMethod} ${url.pathname} -> ${response.status}`);
         error.status = response.status;
         error.response = parsed;
         throw error;
@@ -157,12 +149,12 @@ export class TeslaMateClient {
     return this.request({ method: "GET", path: "/health_check" });
   }
 
-  async suspendLogging(carId) {
-    return this.request({ method: "PUT", path: `/api/car/${carId}/logging/suspend` });
+  async suspendLogging(resourceId) {
+    return this.request({ method: "PUT", path: `/api/car/${resourceId}/logging/suspend` });
   }
 
-  async resumeLogging(carId) {
-    return this.request({ method: "PUT", path: `/api/car/${carId}/logging/resume` });
+  async resumeLogging(resourceId) {
+    return this.request({ method: "PUT", path: `/api/car/${resourceId}/logging/resume` });
   }
 
   async getDriveGpx(driveId) {

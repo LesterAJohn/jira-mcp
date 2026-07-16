@@ -4,7 +4,7 @@ import test from "node:test";
 import { createHttpMcpServer } from "../src/http/server.js";
 import { createMcpServer } from "../src/mcp/server.js";
 
-function createTeslaMateClientMock() {
+function createServiceClientMock() {
   return {
     getConnectionInfo() {
       return { baseUrl: "http://127.0.0.1:4000", authMode: "none" };
@@ -34,7 +34,7 @@ function createTeslaMateClientMock() {
 }
 
 function createTestServer() {
-  const teslamateClient = createTeslaMateClientMock();
+  const serviceClient = createServiceClientMock();
   return createHttpMcpServer({
     host: "127.0.0.1",
     port: 0,
@@ -49,9 +49,9 @@ function createTestServer() {
     rateLimitMaxRequests: 60,
     createMcpServer: () =>
       createMcpServer({
-        name: "teslamate-mcp",
+        name: "skeleton-mcp",
         version: "0.1.0",
-        teslamateClient
+        serviceClient
       })
   });
 }

@@ -63,21 +63,25 @@ function booleanValue(name, fallback = false) {
   throw new Error(`Environment variable ${name} must be either true or false`);
 }
 
+function normalizeAppName(value, fallback = "skeleton") {
+  return String(value ?? fallback).trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-") || fallback;
+}
+
 const transportMode = enumValue("MCP_TRANSPORT_MODE", "stdio", TRANSPORT_MODES);
 const httpAuthMode = enumValue("MCP_HTTP_AUTH_MODE", "token", HTTP_AUTH_MODES);
 
 export const env = {
-  appName: "teslamate",
-  mcpServerName: process.env.MCP_SERVER_NAME ?? "teslamate-mcp",
+  appName: normalizeAppName(process.env.APP_NAME, "skeleton"),
+  mcpServerName: process.env.MCP_SERVER_NAME ?? "skeleton-mcp",
   mcpServerVersion: process.env.MCP_SERVER_VERSION ?? "0.1.0",
   adminAuthKey: process.env.MCP_ADMIN_AUTH_KEY ?? "",
-  teslamate: {
-    baseUrl: required("TESLAMATE_BASE_URL", "http://127.0.0.1:4000"),
-    timeoutMs: positiveNumber("TESLAMATE_TIMEOUT_MS", "15000"),
-    authMode: required("TESLAMATE_AUTH_MODE", "none").toLowerCase(),
-    bearerToken: process.env.TESLAMATE_BEARER_TOKEN ?? "",
-    basicUsername: process.env.TESLAMATE_BASIC_USERNAME ?? "",
-    basicPassword: process.env.TESLAMATE_BASIC_PASSWORD ?? ""
+  targetService: {
+    baseUrl: required("TARGET_SERVICE_BASE_URL", "http://127.0.0.1:4000"),
+    timeoutMs: positiveNumber("TARGET_SERVICE_TIMEOUT_MS", "15000"),
+    authMode: required("TARGET_SERVICE_AUTH_MODE", "none").toLowerCase(),
+    bearerToken: process.env.TARGET_SERVICE_BEARER_TOKEN ?? "",
+    basicUsername: process.env.TARGET_SERVICE_BASIC_USERNAME ?? "",
+    basicPassword: process.env.TARGET_SERVICE_BASIC_PASSWORD ?? ""
   },
   transport: {
     mode: transportMode,

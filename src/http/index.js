@@ -1,7 +1,7 @@
 import { env } from "../config/env.js";
 import { createHttpMcpServer } from "./server.js";
 import { createMcpServer } from "../mcp/server.js";
-import { TeslaMateClient } from "../services/teslamate.js";
+import { TargetServiceClient } from "../services/targetService.js";
 
 async function main() {
   if (env.transport.http.tls.enabled) {
@@ -10,7 +10,7 @@ async function main() {
     );
   }
 
-  const teslamateClient = new TeslaMateClient(env.teslamate);
+  const targetServiceClient = new TargetServiceClient(env.targetService);
 
   const httpServer = createHttpMcpServer({
     host: env.transport.http.host,
@@ -29,7 +29,7 @@ async function main() {
       createMcpServer({
         name: env.mcpServerName,
         version: env.mcpServerVersion,
-        teslamateClient
+        serviceClient: targetServiceClient
       })
   });
 

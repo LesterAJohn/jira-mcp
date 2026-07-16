@@ -11,11 +11,21 @@ function normalizeIdentifier(value, fallback) {
   return candidate;
 }
 
+function normalizeAppName(value, fallback = "skeleton") {
+  const candidate = String(value ?? fallback).trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+  if (!candidate || !/^[a-z][a-z0-9_]*$/.test(candidate)) {
+    return fallback;
+  }
+
+  return candidate;
+}
+
 export class ConfigStore {
   constructor(postgresConfig, options = {}) {
     this.pool = new Pool(postgresConfig);
+    this.appName = normalizeAppName(options.appName ?? process.env.APP_NAME, "skeleton");
     this.defaultUserId = String(options.defaultUserId ?? "default").trim() || "default";
-    this.tableName = normalizeIdentifier(options.tableName ?? "skeleton_config", "skeleton_config");
+    this.tableName = normalizeIdentifier(options.tableName ?? `${this.appName}_config`, `${this.appName}_config`);
   }
 
   normalizeUserId(userId) {

@@ -36,7 +36,6 @@ services:
       MCP_HTTP_AUTH_MODE: token
       MCP_HTTP_TOKEN_SOURCE: vault
       MCP_HTTP_AUTH_TOKENS: replace-me-token
-      APP_NAME: ${APP_NAME:-skeleton}
       MCP_HTTP_TRUST_PROXY: "false"
       MCP_HTTP_MAX_BODY_BYTES: 1048576
       MCP_HTTP_RATE_LIMIT_WINDOW_MS: 60000

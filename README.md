@@ -32,6 +32,85 @@ Local infrastructure:
 - [docker-compose.external.yml](docker-compose.external.yml) runs only the MCP app against external Postgres and Vault services.
 - [initdb/001_config.sh](initdb/001_config.sh) creates and seeds the app-prefixed config table.
 
+## Registering The MCP Server
+
+This repository can be registered with MCP clients in either stdio mode or HTTP mode.
+
+For local development, stdio is the simplest option:
+
+```json
+{
+	"mcpServers": {
+		"skeleton-mcp": {
+			"command": "npm",
+			"args": ["run", "start:stdio"],
+			"cwd": "/Users/lesterjohn/Documents/GitHub/skeleton-mcp"
+		}
+	}
+}
+```
+
+For HTTP-capable clients, use `npm run start:http` and point the client at the `/mcp` endpoint.
+
+### Codex
+
+Use stdio for Codex unless you specifically need HTTP. Add the server to your Codex MCP configuration using the local workspace path:
+
+- Config file: `~/.codex/config.toml`
+- Transport: stdio
+
+```json
+{
+	"mcpServers": {
+		"skeleton-mcp": {
+			"command": "npm",
+			"args": ["run", "start:stdio"],
+			"cwd": "/Users/lesterjohn/Documents/GitHub/skeleton-mcp"
+		}
+	}
+}
+```
+
+If you prefer HTTP, run `npm run start:http` in this repository and configure Codex to send MCP requests to `http://127.0.0.1:3000/mcp`.
+
+### VS Code
+
+Use stdio in VS Code for local workspace access, or HTTP if your setup routes MCP servers over a local endpoint:
+
+- Config file: `.vscode/mcp.json`
+- Transport: stdio or HTTP
+
+```json
+{
+	"command": "npm",
+	"args": ["run", "start:stdio"],
+	"cwd": "/Users/lesterjohn/Documents/GitHub/skeleton-mcp"
+}
+```
+
+If your VS Code setup uses HTTP transport, point it at `http://127.0.0.1:3000/mcp` after starting `npm run start:http`.
+
+### Claude
+
+For Claude Desktop, use stdio and add an MCP server entry that launches the process from this repository:
+
+- Config file: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Transport: stdio
+
+```json
+{
+	"mcpServers": {
+		"skeleton-mcp": {
+			"command": "npm",
+			"args": ["run", "start:stdio"],
+			"cwd": "/Users/lesterjohn/Documents/GitHub/skeleton-mcp"
+		}
+	}
+}
+```
+
+If you are using a Claude setup that supports MCP over HTTP, point it at `http://127.0.0.1:3000/mcp`.
+
 ## Tool Catalog
 
 Read-only tools:

@@ -72,9 +72,10 @@ By default, conversion and unseal helpers read key material in this order:
 
 Schema carryover:
 
-- Seeded Postgres config is stored in `skeleton_config`.
-- Vault token index data should live under `skeleton/http/auth/token-index` unless overridden.
-- External Vault and Postgres stores should use the same app-prefixed table/path names as local development.
+- `APP_NAME` is the single source of truth for app-prefixed names.
+- The Postgres config table is derived as `${APP_NAME}_config`.
+- The Vault token index path is derived as `${APP_NAME}/http/auth/token-index`.
+- External Vault and Postgres stores should use the same derived table/path names as local development.
 
 Compose startup behavior:
 

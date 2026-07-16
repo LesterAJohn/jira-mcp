@@ -12,6 +12,7 @@ const configPath = path.join(vaultProdDir, "config", "vault.hcl");
 const composePath = path.join(vaultProdDir, "docker-compose.vault-prod.yml");
 const devComposePath = path.join(rootDir, "docker-compose.yml");
 const unsealKeyScriptPath = path.join(rootDir, "scripts", "vault-unseal-key.js");
+const initScriptPath = path.join(rootDir, "initdb", "001_config.sh");
 
 test("vault-production scaffold files exist", () => {
   assert.equal(fs.existsSync(vaultProdDir), true);
@@ -20,19 +21,21 @@ test("vault-production scaffold files exist", () => {
   assert.equal(fs.existsSync(configPath), true);
   assert.equal(fs.existsSync(composePath), true);
   assert.equal(fs.existsSync(unsealKeyScriptPath), true);
+  assert.equal(fs.existsSync(initScriptPath), true);
 });
 
 test("vault production config uses raft storage", () => {
   const config = fs.readFileSync(configPath, "utf8");
-  const initdb = fs.readFileSync(path.join(rootDir, "initdb", "001_config.sql"), "utf8");
+  const initdb = fs.readFileSync(initScriptPath, "utf8");
 
   assert.match(config, /storage\s+"raft"\s*\{/);
   assert.match(config, /path\s*=\s*"\/vault\/data"/);
   assert.match(config, /node_id\s*=\s*"vault-1"/);
   assert.match(config, /listener\s+"tcp"\s*\{/);
-  assert.match(initdb, /CREATE TABLE IF NOT EXISTS skeleton_config/);
-  assert.match(initdb, /INSERT INTO skeleton_config/);
-  assert.match(initdb, /CREATE INDEX IF NOT EXISTS skeleton_config_key_idx/);
+  assert.match(initdb, /APP_NAME="\$\{APP_NAME:-skeleton\}"/);
+  assert.match(initdb, /TABLE_NAME="\$\{APP_NAME\}_config"/);
+  assert.match(initdb, /CREATE TABLE IF NOT EXISTS \$\{TABLE_NAME\}/);
+  assert.match(initdb, /INSERT INTO \$\{TABLE_NAME\}/);
 });
 
 test("prod compose runs vault in config mode and not dev mode", () => {

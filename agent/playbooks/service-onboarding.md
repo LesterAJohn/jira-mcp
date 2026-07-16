@@ -60,4 +60,5 @@ Use this checklist when adapting the skeleton for a new service.
 - Keep `VAULT_UNSEAL_KEY` and `src/config/vault.unseal.key.json` behavior aligned with docs when unseal workflows are touched.
 - Document an app-only compose path for environments where Vault and Postgres are external services.
 - Treat `docker-compose.external.yml` as the supported startup shape for external Vault/Postgres deployments.
+- Treat `APP_NAME` as the single source of truth for app-prefixed Vault and Postgres names.
 - Keep production hardening notes explicit.

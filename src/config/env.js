@@ -147,7 +147,7 @@ export const env = {
     database: required("POSTGRES_DB", "mcp_config"),
     user: required("POSTGRES_USER", "mcp_user"),
     password: required("POSTGRES_PASSWORD", "mcp_password"),
-    configTable: required("POSTGRES_CONFIG_TABLE", `${appName}_config`)
+    configTable: process.env.POSTGRES_CONFIG_TABLE ?? `${appName}_config`
   },
   vault: {
     endpoint: required("VAULT_ADDR", "http://127.0.0.1:8200"),
@@ -159,7 +159,7 @@ export const env = {
     agentListenerEnabled: booleanValue("VAULT_AGENT_LISTENER_ENABLED", false),
     agentListenerAddr: process.env.VAULT_AGENT_LISTENER_ADDR ?? "http://127.0.0.1:8100",
     kvMount: required("VAULT_KV_MOUNT", "secret"),
-    tokenIndexPath: required("MCP_HTTP_VAULT_TOKEN_INDEX_PATH", `${appName}/http/auth/token-index`),
+    tokenIndexPath: process.env.MCP_HTTP_VAULT_TOKEN_INDEX_PATH ?? `${appName}/http/auth/token-index`,
     writeRetryAttempts: positiveNumber("VAULT_WRITE_RETRY_ATTEMPTS", "3"),
     writeRetryBaseDelayMs: positiveNumber("VAULT_WRITE_RETRY_BASE_DELAY_MS", "200"),
     writeRetryMaxDelayMs: positiveNumber("VAULT_WRITE_RETRY_MAX_DELAY_MS", "2000")

@@ -52,6 +52,7 @@ Implementation requirements:
 17. If Vault or compose startup is touched, preserve Raft persistence and `vault-unseal-key-init` startup ordering.
 18. Keep managed unseal key flow aligned with docs (`VAULT_UNSEAL_KEY` then file fallback then generate).
 19. If the repo supports external Vault/Postgres services, keep the app-only compose path documented and aligned with env requirements.
+20. If app naming is configurable, use `APP_NAME` as the single source for derived Vault and Postgres names.
 
 Documentation freshness requirements:
 

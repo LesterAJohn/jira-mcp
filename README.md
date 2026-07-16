@@ -30,7 +30,7 @@ Runtime flow:
 Local infrastructure:
 - [docker-compose.yml](docker-compose.yml) runs Postgres and Vault for local development.
 - [docker-compose.external.yml](docker-compose.external.yml) runs only the MCP app against external Postgres and Vault services.
-- [initdb/001_config.sql](initdb/001_config.sql) creates and seeds the `skeleton_config` table.
+- [initdb/001_config.sh](initdb/001_config.sh) creates and seeds the app-prefixed config table.
 
 ## Tool Catalog
 
@@ -67,6 +67,7 @@ If MCP_ADMIN_AUTH_KEY is configured, mutating tools require authorizationKey.
 ## Environment Variables
 
 Core:
+- APP_NAME
 - MCP_SERVER_NAME
 - MCP_SERVER_VERSION
 - MCP_ALLOW_SENSITIVE_OUTPUT
@@ -145,8 +146,9 @@ Vault:
 Naming defaults:
 
 - `APP_NAME` defaults to `skeleton`.
-- `POSTGRES_CONFIG_TABLE` defaults to `${APP_NAME}_config`, which is `skeleton_config` by default.
-- `MCP_HTTP_VAULT_TOKEN_INDEX_PATH` defaults to `${APP_NAME}/http/auth/token-index`, which is `skeleton/http/auth/token-index` by default.
+- The Postgres config table defaults to `${APP_NAME}_config`.
+- The Vault token index path defaults to `${APP_NAME}/http/auth/token-index`.
+- Set only `APP_NAME` to rename the app-scoped Vault/Postgres schema across local and external stores.
 
 Reference values are in [.env.example](.env.example).
 

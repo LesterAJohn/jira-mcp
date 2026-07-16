@@ -43,6 +43,7 @@ Use this template to describe a service integration request.
 - Managed unseal key source (`VAULT_UNSEAL_KEY` vs file fallback) expectations:
 - Startup helper requirements (`vault-unseal-key-init` and compose ordering):
 - External Vault/Postgres support requirements (app-only compose, required env vars):
+- App-name source of truth requirements (`APP_NAME` -> derived Vault/Postgres names):
 
 ## Data Model
 

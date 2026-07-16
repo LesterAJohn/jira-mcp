@@ -21,4 +21,5 @@ The VS Code custom agent at `.github/agents/skeleton-services-mcp.agent.md` uses
 - Maintain multi-user defaults (Vault token fallback user and Postgres config default user)
 - Preserve Vault Raft persistence patterns in both local and production compose stacks
 - Preserve startup ordering that runs the managed unseal key init helper before Vault starts
+- Preserve support for external Vault and Postgres services via app-only compose startup
 - Add tests and documentation updates

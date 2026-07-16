@@ -32,6 +32,7 @@ Current skeleton capabilities to preserve:
 - Vault Raft persistence in local and production compose stacks.
 - Managed unseal key resolution flow (`VAULT_UNSEAL_KEY` -> `src/config/vault.unseal.key.json` -> generated key).
 - Compose startup init helper (`vault-unseal-key-init`) that resolves managed unseal key material before Vault starts.
+- App-only external deployment mode (`docker-compose.external.yml`) for existing Vault and Postgres services.
 
 Always start by reviewing:
 - [README.md](README.md)
@@ -76,6 +77,7 @@ Required implementation workflow:
 17. Update README.md so new tools and environment variables are documented.
 18. Run npm test before finishing and summarize changes with file paths.
 19. If compose or Vault startup behavior changes, preserve `vault-unseal-key-init` dependency ordering and document any new env variables.
+20. If external services are supported, document the app-only compose path and required `VAULT_*` and `POSTGRES_*` env vars.
 
 Guardrails:
 - Do not remove or weaken redaction behavior.

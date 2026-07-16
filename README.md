@@ -29,6 +29,7 @@ Runtime flow:
 
 Local infrastructure:
 - [docker-compose.yml](docker-compose.yml) runs Postgres and Vault for local development.
+- [docker-compose.external.yml](docker-compose.external.yml) runs only the MCP app against external Postgres and Vault services.
 - [initdb/001_config.sql](initdb/001_config.sql) creates and seeds the app_config table.
 
 ## Tool Catalog
@@ -159,6 +160,27 @@ docker exec -e VAULT_ADDR=http://127.0.0.1:8200 skeleton-mcp-vault vault operato
 6. Seed a test secret in Vault.
 7. Start the MCP server with npm start.
 8. Run tests with npm test.
+
+## External Services Mode
+
+Use this mode when Vault and Postgres are already managed outside this repository.
+
+Required environment variables:
+
+- `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+- `VAULT_ADDR`, `VAULT_TOKEN`
+
+Run the app-only compose stack:
+
+```bash
+docker compose -f docker-compose.external.yml up -d
+```
+
+Notes:
+
+- The app still uses Vault for secrets and Postgres for config.
+- The external stack is the same MCP HTTP container, but it skips local Postgres/Vault containers.
+- If you keep Vault sealed, the app will still require whatever unseal process your external Vault uses.
 
 ### Test Coverage Notes
 

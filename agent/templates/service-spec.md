@@ -1,64 +1,43 @@
-# Service Spec Template
+# Jira MCP Feature Spec Template
 
-Use this template to describe a service integration request.
+Use this template for new Jira MCP work requests.
 
-## Service Overview
+## Overview
 
-- Service name:
-- Purpose:
-- Base URL / endpoint style:
-- Authentication mechanism:
-- Transport mode (`stdio`, `http`, `both`):
-- HTTP auth mode (`token`, `oauth2`, `both`) when HTTP is used:
-- Vault token lifecycle methods to expose:
-- Vault Agent token sink read requirement:
-- Bearer-token seeding requirements (CLI helper, MCP tool, authorization controls):
-- OAuth token seeding requirements (CLI helper, MCP tool, token persistence shape):
+- Feature name:
+- Jira API endpoints:
+- Jira permission/scopes assumptions:
+- Auth mechanism (`basic` or `bearer`):
+- Transport impact (`stdio`, `http`, `both`):
 
 ## Operations
 
-### Read-only Operations
+### Read-only tools
 
-- Name:
+- Tool names:
 - Inputs:
-- Output shape:
+- Expected response shape:
 
-### Mutating Operations
+### Mutating tools
 
-- Name:
+- Tool names:
 - Inputs:
-- Output shape:
-- Authorization requirements:
+- Required `authorizationKey` behavior:
+- Expected response shape:
 
-## Reliability
+## Reliability and security
 
-- Retry policy:
-- Timeouts:
-- Rate limits:
+- Retry and timeout expectations:
+- Redaction/sensitive field expectations:
+- Error behavior requirements:
+- External Vault/Postgres support requirements:
 
-## Security
+## Tests
 
-- Sensitive fields:
-- Redaction expectations:
-- Audit requirements:
-- Secret storage location (Vault path and shape):
-- Managed unseal key source (`VAULT_UNSEAL_KEY` vs file fallback) expectations:
-- Startup helper requirements (`vault-unseal-key-init` and compose ordering):
-- External Vault/Postgres support requirements (app-only compose, required env vars):
-- App-name source of truth requirements (`APP_NAME` -> derived Vault/Postgres names):
+- New tests required:
+- Existing tests touched:
 
-## Data Model
+## Documentation
 
-- Config scope (global or per-user):
-- Default user behavior:
-- Future default parameters required:
-- Rotation time default value:
-- Rotation time user override fields:
-
-## MCP Mapping
-
-- Proposed MCP tool names:
-- Validation schema requirements:
-- Expected error behavior:
-- If bearer-token seeding is requested, include the token index path, token metadata fields, and required admin authorization behavior.
-- If OAuth token seeding is requested, include the token index path, required provided token input, and any metadata fields that should be persisted.
+- README updates required:
+- External Vault/Postgres support requirements to mention explicitly:

@@ -12,9 +12,9 @@ import {
 } from "../src/config/vaultAuthTokenIndex.js";
 
 test("normalizeAppName and token path derive from app name", () => {
-  assert.equal(normalizeAppName("Skeleton MCP"), "skeleton-mcp");
-  assert.equal(getVaultTokenIndexPath("Skeleton"), "skeleton/http/auth/token-index");
-  assert.equal(getVaultUserTokenIndexPath("Skeleton", "User-123"), "skeleton/users/user-123/http/auth/token-index");
+  assert.equal(normalizeAppName("Jira MCP"), "jira-mcp");
+  assert.equal(getVaultTokenIndexPath("Jira"), "jira/http/auth/token-index");
+  assert.equal(getVaultUserTokenIndexPath("Jira", "User-123"), "jira/users/user-123/http/auth/token-index");
 });
 
 test("createVaultTokenEntry builds bearer token metadata", () => {

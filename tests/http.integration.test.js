@@ -2,27 +2,24 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createHttpMcpServer } from "../src/http/server.js";
-import { createMcpServer } from "../src/mcp/server.js";
+import { createJiraMcpServer } from "../src/mcp/jiraServer.js";
 
 function createServiceClientMock() {
   return {
     getConnectionInfo() {
-      return { baseUrl: "http://127.0.0.1:4000", authMode: "none" };
+      return { baseUrl: "https://example.atlassian.net", authMode: "none" };
     },
     listKnownEndpoints() {
       return [];
     },
+    listKnownGroups() {
+      return [];
+    },
+    findKnownEndpoint() {
+      return null;
+    },
     async healthCheck() {
       return { status: 200, data: null };
-    },
-    async suspendLogging(carId) {
-      return { ok: true, carId };
-    },
-    async resumeLogging(carId) {
-      return { ok: true, carId };
-    },
-    async getDriveGpx(driveId) {
-      return { status: 200, data: `<gpx id=\"${driveId}\"/>` };
     },
     async request(payload) {
       return {
@@ -48,8 +45,8 @@ function createTestServer() {
     rateLimitWindowMs: 60_000,
     rateLimitMaxRequests: 60,
     createMcpServer: () =>
-      createMcpServer({
-        name: "skeleton-mcp",
+      createJiraMcpServer({
+        name: "jira-mcp",
         version: "0.1.0",
         serviceClient
       })

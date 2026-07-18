@@ -20,7 +20,7 @@ function normalizeList(value, fallback = []) {
 }
 
 export function normalizeAppName(appName) {
-  return String(appName ?? "skeleton").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-") || "skeleton";
+  return String(appName ?? "jira").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-") || "jira";
 }
 
 export function normalizeUserIdForPath(userId) {

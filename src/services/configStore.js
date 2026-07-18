@@ -11,7 +11,7 @@ function normalizeIdentifier(value, fallback) {
   return candidate;
 }
 
-function normalizeAppName(value, fallback = "skeleton") {
+function normalizeAppName(value, fallback = "jira") {
   const candidate = String(value ?? fallback).trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_");
   if (!candidate || !/^[a-z][a-z0-9_]*$/.test(candidate)) {
     return fallback;
@@ -23,7 +23,7 @@ function normalizeAppName(value, fallback = "skeleton") {
 export class ConfigStore {
   constructor(postgresConfig, options = {}) {
     this.pool = new Pool(postgresConfig);
-    this.appName = normalizeAppName(options.appName ?? process.env.APP_NAME, "skeleton");
+    this.appName = normalizeAppName(options.appName ?? process.env.APP_NAME, "jira");
     this.defaultUserId = String(options.defaultUserId ?? "default").trim() || "default";
     this.tableName = normalizeIdentifier(options.tableName ?? `${this.appName}_config`, `${this.appName}_config`);
   }

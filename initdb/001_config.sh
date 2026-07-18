@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="${APP_NAME:-skeleton}"
+APP_NAME="${APP_NAME:-jira}"
 TABLE_NAME="${APP_NAME}_config"
 
 case "$APP_NAME" in

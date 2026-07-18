@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createMcpServer } from "../src/mcp/server.js";
+import { createJiraMcpServer } from "../src/mcp/jiraServer.js";
 
 function setEnv(updates) {
   const previous = {};
@@ -27,34 +27,65 @@ function setEnv(updates) {
 
 function createServiceClientMock() {
   const calls = {
-    suspend: 0,
-    resume: 0,
-    request: 0
+    createIssue: 0,
+    request: 0,
+    requestByKey: 0
   };
 
   const client = {
     getConnectionInfo() {
       return {
-        baseUrl: "http://127.0.0.1:4000",
+        baseUrl: "https://example.atlassian.net",
+        apiPrefix: "/rest/api/3",
         authMode: "none"
       };
     },
+    listKnownGroups() {
+      return ["issues", "projects"];
+    },
     listKnownEndpoints() {
-      return [{ method: "GET", path: "/health_check" }];
+      return [
+        { key: "projectSearch", method: "GET", path: "/rest/api/3/project/search", group: "projects" },
+        { key: "issueCreate", method: "POST", path: "/rest/api/3/issue", group: "issues" }
+      ];
+    },
+    findKnownEndpoint(key) {
+      return this.listKnownEndpoints().find((entry) => entry.key === key) ?? null;
     },
     async healthCheck() {
       return { status: 200, data: null };
     },
-    async suspendLogging(carId) {
-      calls.suspend += 1;
-      return { ok: true, carId };
+    async getMyself() {
+      return { status: 200, data: { accountId: "abc" } };
     },
-    async resumeLogging(carId) {
-      calls.resume += 1;
-      return { ok: true, carId };
+    async listProjects(args) {
+      return { status: 200, data: { values: [], args } };
     },
-    async getDriveGpx(driveId) {
-      return { status: 200, data: `<gpx id=\"${driveId}\"/>` };
+    async getProject(projectIdOrKey, query) {
+      return { status: 200, data: { key: projectIdOrKey, query } };
+    },
+    async searchIssues(args) {
+      return { status: 200, data: { issues: [], ...args } };
+    },
+    async getIssue(issueIdOrKey, query) {
+      return { status: 200, data: { key: issueIdOrKey, query } };
+    },
+    async createIssue(fields, additionalBody) {
+      calls.createIssue += 1;
+      return { status: 201, data: { fields, additionalBody } };
+    },
+    async editIssue(issueIdOrKey, body, query) {
+      return { status: 204, data: { issueIdOrKey, body, query } };
+    },
+    async transitionIssue(issueIdOrKey, body) {
+      return { status: 204, data: { issueIdOrKey, body } };
+    },
+    async addComment(issueIdOrKey, body) {
+      return { status: 201, data: { issueIdOrKey, body } };
+    },
+    async requestByKey(payload) {
+      calls.requestByKey += 1;
+      return { status: 200, ...payload };
     },
     async request(payload) {
       calls.request += 1;
@@ -76,18 +107,18 @@ async function invokeTool(server, name, args = {}) {
   return { result, payload };
 }
 
-test("service_health_check returns ok", async () => {
+test("jira_health_check returns ok", async () => {
   const restoreEnv = setEnv({ MCP_ADMIN_AUTH_KEY: "" });
 
   try {
     const { client } = createServiceClientMock();
-    const server = createMcpServer({
-      name: "skeleton-mcp",
+    const server = createJiraMcpServer({
+      name: "jira-mcp",
       version: "0.1.0",
       serviceClient: client
     });
 
-    const { payload } = await invokeTool(server, "service_health_check");
+    const { payload } = await invokeTool(server, "jira_health_check");
 
     assert.equal(payload.ok, true);
     assert.equal(payload.status, 200);
@@ -97,40 +128,39 @@ test("service_health_check returns ok", async () => {
   }
 });
 
-test("mutating service tools require authorizationKey when admin key is configured", async () => {
+test("mutating jira tools require authorizationKey when admin key is configured", async () => {
   const restoreEnv = setEnv({ MCP_ADMIN_AUTH_KEY: "super-secret" });
 
   try {
     const { client, calls } = createServiceClientMock();
-    const server = createMcpServer({
-      name: "skeleton-mcp",
+    const server = createJiraMcpServer({
+      name: "jira-mcp",
       version: "0.1.0",
       serviceClient: client
     });
 
-    const unauthorized = await invokeTool(server, "service_suspend_logging", {
-      carId: 1
+    const unauthorized = await invokeTool(server, "jira_create_issue", {
+      fields: { summary: "Test issue" }
     });
     assert.equal(unauthorized.result.isError, true);
     assert.equal(unauthorized.payload.status, 401);
 
-    const authorized = await invokeTool(server, "service_suspend_logging", {
-      carId: 1,
+    const authorized = await invokeTool(server, "jira_create_issue", {
+      fields: { summary: "Test issue" },
       authorizationKey: "super-secret"
     });
     assert.equal(authorized.payload.ok, true);
-    assert.equal(calls.suspend, 1);
+    assert.equal(calls.createIssue, 1);
 
-    const genericUnauthorized = await invokeTool(server, "service_api_request", {
-      method: "POST",
-      path: "/api/car/1/logging/suspend"
+    const operationUnauthorized = await invokeTool(server, "jira_operation_request", {
+      operationKey: "issueCreate"
     });
-    assert.equal(genericUnauthorized.result.isError, true);
-    assert.equal(genericUnauthorized.payload.status, 401);
+    assert.equal(operationUnauthorized.result.isError, true);
+    assert.equal(operationUnauthorized.payload.status, 401);
 
-    const genericAuthorized = await invokeTool(server, "service_api_request", {
+    const genericAuthorized = await invokeTool(server, "jira_api_request", {
       method: "POST",
-      path: "/api/car/1/logging/suspend",
+      path: "/issue",
       authorizationKey: "super-secret"
     });
     assert.equal(genericAuthorized.payload.ok, true);

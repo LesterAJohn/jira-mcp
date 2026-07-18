@@ -9,7 +9,7 @@ TMP_EXPORT=""
 
 COMPOSE_DEV_FILE="docker-compose.yml"
 COMPOSE_PROD_FILE="vault-production/docker-compose.vault-prod.yml"
-VAULT_CONTAINER_NAME="skeleton-mcp-vault"
+VAULT_CONTAINER_NAME="jira-mcp-vault"
 VAULT_ADDR_DEFAULT="http://127.0.0.1:8200"
 DEV_TOKEN_DEFAULT="root"
 INIT_KEYS_OUT=""
@@ -27,7 +27,7 @@ Options:
   --mount <name>             KV mount to export/import (default: secret)
   --dev-token <token>        Dev root token (default: root)
   --vault-addr <url>         Vault API address (default: http://127.0.0.1:8200)
-  --container <name>         Vault container name (default: skeleton-mcp-vault)
+  --container <name>         Vault container name (default: jira-mcp-vault)
   --compose-dev <path>       Dev compose file (default: docker-compose.yml)
   --compose-prod <path>      Prod compose file (default: vault-production/docker-compose.vault-prod.yml)
   --skip-export              Do not export secrets from dev Vault

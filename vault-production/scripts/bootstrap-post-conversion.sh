@@ -3,11 +3,11 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VAULT_ADDR="${VAULT_ADDR:-http://127.0.0.1:8200}"
-VAULT_CONTAINER_NAME="skeleton-mcp-vault"
+VAULT_CONTAINER_NAME="jira-mcp-vault"
 KV_MOUNT="${VAULT_KV_MOUNT:-secret}"
 APPROLE_PATH="approle"
 POLICY_NAME="mcp-service-policy"
-ROLE_NAME="skeleton-mcp-service"
+ROLE_NAME="jira-mcp-service"
 AUDIT_PATH="file"
 AUDIT_FILE="/vault/file/audit.log"
 OUTPUT_FORMAT="env"
@@ -21,10 +21,10 @@ Usage:
 Options:
   --vault-addr <url>         Vault address (default: http://127.0.0.1:8200)
   --vault-token <token>      Vault token with admin privileges (required)
-  --container <name>         Vault container name (default: skeleton-mcp-vault)
+  --container <name>         Vault container name (default: jira-mcp-vault)
   --kv-mount <name>          KV v2 mount for app secrets (default: secret)
   --policy-name <name>       Policy name (default: mcp-service-policy)
-  --role-name <name>         AppRole name (default: skeleton-mcp-service)
+  --role-name <name>         AppRole name (default: jira-mcp-service)
   --approle-path <path>      Auth mount path for AppRole (default: approle)
   --audit-path <path>        Audit device path (default: file)
   --audit-file <path>        Audit log file path (default: /vault/file/audit.log)

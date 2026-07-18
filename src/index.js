@@ -1,7 +1,7 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { env } from "./config/env.js";
-import { createMcpServer } from "./mcp/server.js";
-import { TargetServiceClient } from "./services/targetService.js";
+import { createJiraMcpServer } from "./mcp/jiraServer.js";
+import { JiraServiceClient } from "./services/jiraService.js";
 
 async function main() {
   if (env.transport.mode === "http") {
@@ -14,12 +14,12 @@ async function main() {
     return;
   }
 
-  const targetServiceClient = new TargetServiceClient(env.targetService);
+  const jiraServiceClient = new JiraServiceClient(env.jira);
 
-  const server = createMcpServer({
+  const server = createJiraMcpServer({
     name: env.mcpServerName,
     version: env.mcpServerVersion,
-    serviceClient: targetServiceClient
+    serviceClient: jiraServiceClient
   });
 
   const transport = new StdioServerTransport();

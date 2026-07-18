@@ -32,7 +32,7 @@ test("vault production config uses raft storage", () => {
   assert.match(config, /path\s*=\s*"\/vault\/data"/);
   assert.match(config, /node_id\s*=\s*"vault-1"/);
   assert.match(config, /listener\s+"tcp"\s*\{/);
-  assert.match(initdb, /APP_NAME="\$\{APP_NAME:-skeleton\}"/);
+  assert.match(initdb, /APP_NAME="\$\{APP_NAME:-jira\}"/);
   assert.match(initdb, /TABLE_NAME="\$\{APP_NAME\}_config"/);
   assert.match(initdb, /CREATE TABLE IF NOT EXISTS \$\{TABLE_NAME\}/);
   assert.match(initdb, /INSERT INTO \$\{TABLE_NAME\}/);

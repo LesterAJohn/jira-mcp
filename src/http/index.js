@@ -1,7 +1,7 @@
 import { env } from "../config/env.js";
 import { createHttpMcpServer } from "./server.js";
-import { createMcpServer } from "../mcp/server.js";
-import { TargetServiceClient } from "../services/targetService.js";
+import { createJiraMcpServer } from "../mcp/jiraServer.js";
+import { JiraServiceClient } from "../services/jiraService.js";
 
 async function main() {
   if (env.transport.http.tls.enabled) {
@@ -10,7 +10,7 @@ async function main() {
     );
   }
 
-  const targetServiceClient = new TargetServiceClient(env.targetService);
+  const jiraServiceClient = new JiraServiceClient(env.jira);
 
   const httpServer = createHttpMcpServer({
     host: env.transport.http.host,
@@ -26,10 +26,10 @@ async function main() {
     rateLimitWindowMs: env.transport.http.rateLimitWindowMs,
     rateLimitMaxRequests: env.transport.http.rateLimitMaxRequests,
     createMcpServer: () =>
-      createMcpServer({
+      createJiraMcpServer({
         name: env.mcpServerName,
         version: env.mcpServerVersion,
-        serviceClient: targetServiceClient
+        serviceClient: jiraServiceClient
       })
   });
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createJiraMcpServer } from "../src/mcp/jiraServer.js";
+import { createMcpServer } from "../src/mcp/server.js";
 
 function setEnv(updates) {
   const previous = {};
@@ -28,64 +28,66 @@ function setEnv(updates) {
 function createServiceClientMock() {
   const calls = {
     createIssue: 0,
-    request: 0,
-    requestByKey: 0
+    operationRequest: 0,
+    request: 0
   };
 
   const client = {
     getConnectionInfo() {
       return {
         baseUrl: "https://example.atlassian.net",
-        apiPrefix: "/rest/api/3",
-        authMode: "none"
+        authMode: "basic"
       };
     },
     listKnownGroups() {
       return ["issues", "projects"];
     },
     listKnownEndpoints() {
-      return [
-        { key: "projectSearch", method: "GET", path: "/rest/api/3/project/search", group: "projects" },
-        { key: "issueCreate", method: "POST", path: "/rest/api/3/issue", group: "issues" }
-      ];
+      return [{ key: "issueCreate", group: "issues", method: "POST", path: "/rest/api/3/issue" }];
     },
     findKnownEndpoint(key) {
-      return this.listKnownEndpoints().find((entry) => entry.key === key) ?? null;
+      if (key !== "issueCreate") {
+        return null;
+      }
+      return { key: "issueCreate", method: "POST", path: "/rest/api/3/issue" };
     },
     async healthCheck() {
       return { status: 200, data: null };
     },
     async getMyself() {
-      return { status: 200, data: { accountId: "abc" } };
+      return { accountId: "abc", displayName: "Test User" };
     },
-    async listProjects(args) {
-      return { status: 200, data: { values: [], args } };
+    async listProjects() {
+      return { values: [] };
     },
-    async getProject(projectIdOrKey, query) {
-      return { status: 200, data: { key: projectIdOrKey, query } };
+    async getProject(projectIdOrKey) {
+      return { id: "10000", key: projectIdOrKey };
     },
-    async searchIssues(args) {
-      return { status: 200, data: { issues: [], ...args } };
+    async searchIssues(payload) {
+      return { issues: [], query: payload.jql };
     },
-    async getIssue(issueIdOrKey, query) {
-      return { status: 200, data: { key: issueIdOrKey, query } };
+    async getIssue(issueIdOrKey) {
+      return { id: issueIdOrKey, key: issueIdOrKey };
     },
-    async createIssue(fields, additionalBody) {
+    async createIssue(fields) {
       calls.createIssue += 1;
-      return { status: 201, data: { fields, additionalBody } };
+      return { id: "10001", key: "TEST-1", fields };
     },
     async editIssue(issueIdOrKey, body, query) {
-      return { status: 204, data: { issueIdOrKey, body, query } };
+      return { issueIdOrKey, body, query };
     },
     async transitionIssue(issueIdOrKey, body) {
-      return { status: 204, data: { issueIdOrKey, body } };
+      return { issueIdOrKey, body };
     },
     async addComment(issueIdOrKey, body) {
-      return { status: 201, data: { issueIdOrKey, body } };
+      return { issueIdOrKey, body };
     },
     async requestByKey(payload) {
-      calls.requestByKey += 1;
-      return { status: 200, ...payload };
+      calls.operationRequest += 1;
+      return {
+        status: 200,
+        ...payload
+      };
     },
     async request(payload) {
       calls.request += 1;
@@ -107,12 +109,12 @@ async function invokeTool(server, name, args = {}) {
   return { result, payload };
 }
 
-test("jira_health_check returns ok", async () => {
+test("service_health_check returns ok", async () => {
   const restoreEnv = setEnv({ MCP_ADMIN_AUTH_KEY: "" });
 
   try {
     const { client } = createServiceClientMock();
-    const server = createJiraMcpServer({
+    const server = createMcpServer({
       name: "jira-mcp",
       version: "0.1.0",
       serviceClient: client
@@ -128,35 +130,36 @@ test("jira_health_check returns ok", async () => {
   }
 });
 
-test("mutating jira tools require authorizationKey when admin key is configured", async () => {
+test("mutating Jira tools require authorizationKey when admin key is configured", async () => {
   const restoreEnv = setEnv({ MCP_ADMIN_AUTH_KEY: "super-secret" });
 
   try {
     const { client, calls } = createServiceClientMock();
-    const server = createJiraMcpServer({
+    const server = createMcpServer({
       name: "jira-mcp",
       version: "0.1.0",
       serviceClient: client
     });
 
     const unauthorized = await invokeTool(server, "jira_create_issue", {
-      fields: { summary: "Test issue" }
+      fields: { project: { key: "TEST" }, summary: "Sample", issuetype: { name: "Task" } }
     });
     assert.equal(unauthorized.result.isError, true);
     assert.equal(unauthorized.payload.status, 401);
 
     const authorized = await invokeTool(server, "jira_create_issue", {
-      fields: { summary: "Test issue" },
+      fields: { project: { key: "TEST" }, summary: "Sample", issuetype: { name: "Task" } },
       authorizationKey: "super-secret"
     });
     assert.equal(authorized.payload.ok, true);
     assert.equal(calls.createIssue, 1);
 
-    const operationUnauthorized = await invokeTool(server, "jira_operation_request", {
-      operationKey: "issueCreate"
+    const genericUnauthorized = await invokeTool(server, "jira_api_request", {
+      method: "POST",
+      path: "/issue"
     });
-    assert.equal(operationUnauthorized.result.isError, true);
-    assert.equal(operationUnauthorized.payload.status, 401);
+    assert.equal(genericUnauthorized.result.isError, true);
+    assert.equal(genericUnauthorized.payload.status, 401);
 
     const genericAuthorized = await invokeTool(server, "jira_api_request", {
       method: "POST",
@@ -165,6 +168,13 @@ test("mutating jira tools require authorizationKey when admin key is configured"
     });
     assert.equal(genericAuthorized.payload.ok, true);
     assert.equal(calls.request, 1);
+
+    const operationAuthorized = await invokeTool(server, "jira_operation_request", {
+      operationKey: "issueCreate",
+      authorizationKey: "super-secret"
+    });
+    assert.equal(operationAuthorized.payload.ok, true);
+    assert.equal(calls.operationRequest, 1);
   } finally {
     restoreEnv();
   }

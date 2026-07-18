@@ -1,66 +1,81 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { JiraServiceClient } from "../src/services/jiraService.js";
+import { JiraServiceClient } from "../src/services/targetService.js";
 
-test("requestByKey resolves Jira path params and array query values", async () => {
-  const client = new JiraServiceClient({
-    baseUrl: "https://example.atlassian.net",
-    authMode: "none"
-  });
+function createJsonResponse(payload, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: {
+      get(name) {
+        return name.toLowerCase() === "content-type" ? "application/json" : null;
+      }
+    },
+    async text() {
+      return JSON.stringify(payload);
+    }
+  };
+}
 
+test("JiraServiceClient prefixes Jira API path and sends basic auth", async () => {
   const originalFetch = globalThis.fetch;
-  let requestedUrl = "";
+  const calls = [];
 
-  globalThis.fetch = async (input, init) => {
-    requestedUrl = String(input);
-    assert.equal(init.method, "GET");
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { "content-type": "application/json" }
-    });
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url: String(url), options });
+    return createJsonResponse({ ok: true }, 200);
   };
 
   try {
-    const response = await client.requestByKey({
-      key: "userBulk",
-      query: {
-        accountId: ["abc", "def"]
-      }
+    const client = new JiraServiceClient({
+      baseUrl: "https://example.atlassian.net",
+      authMode: "basic",
+      basicUsername: "user@example.com",
+      basicPassword: "api-token"
     });
 
-    assert.equal(response.status, 200);
-    assert.match(requestedUrl, /\/rest\/api\/3\/user\/bulk\?accountId=abc&accountId=def$/);
+    const result = await client.request({
+      method: "GET",
+      path: "/issue/TEST-1",
+      query: { fields: ["summary", "status"] }
+    });
+
+    assert.equal(result.status, 200);
+    assert.equal(calls.length, 1);
+    assert.match(calls[0].url, /\/rest\/api\/3\/issue\/TEST-1/);
+    assert.ok(calls[0].options.headers.Authorization.startsWith("Basic "));
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test("request normalizes relative Jira paths under the API prefix", async () => {
-  const client = new JiraServiceClient({
-    baseUrl: "https://example.atlassian.net",
-    authMode: "none"
-  });
-
+test("JiraServiceClient requestByKey resolves path parameters", async () => {
   const originalFetch = globalThis.fetch;
-  let requestedUrl = "";
 
-  globalThis.fetch = async (input) => {
-    requestedUrl = String(input);
-    return new Response(JSON.stringify({ issue: "ABC-1" }), {
-      status: 200,
-      headers: { "content-type": "application/json" }
-    });
+  globalThis.fetch = async (url) => {
+    assert.match(String(url), /\/rest\/api\/3\/issue\/ABC-123$/);
+    return createJsonResponse({ key: "ABC-123" }, 200);
   };
 
   try {
-    const response = await client.request({
-      method: "GET",
-      path: "/issue/ABC-1"
+    const client = new JiraServiceClient({ baseUrl: "https://example.atlassian.net" });
+    const response = await client.requestByKey({
+      key: "issueGet",
+      pathParams: { issueIdOrKey: "ABC-123" }
     });
 
-    assert.equal(response.data.issue, "ABC-1");
-    assert.equal(requestedUrl, "https://example.atlassian.net/rest/api/3/issue/ABC-1");
+    assert.equal(response.status, 200);
+    assert.equal(response.data.key, "ABC-123");
+
+    await assert.rejects(
+      () =>
+        client.requestByKey({
+          key: "issueGet",
+          pathParams: {}
+        }),
+      /Missing required path parameter: issueIdOrKey/
+    );
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -2,17 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createHttpMcpServer } from "../src/http/server.js";
-import { createJiraMcpServer } from "../src/mcp/jiraServer.js";
+import { createMcpServer } from "../src/mcp/server.js";
 
 function createServiceClientMock() {
   return {
     getConnectionInfo() {
-      return { baseUrl: "https://example.atlassian.net", authMode: "none" };
-    },
-    listKnownEndpoints() {
-      return [];
+      return { baseUrl: "https://example.atlassian.net", authMode: "basic" };
     },
     listKnownGroups() {
+      return [];
+    },
+    listKnownEndpoints() {
       return [];
     },
     findKnownEndpoint() {
@@ -20,6 +20,36 @@ function createServiceClientMock() {
     },
     async healthCheck() {
       return { status: 200, data: null };
+    },
+    async getMyself() {
+      return { accountId: "abc" };
+    },
+    async listProjects() {
+      return { values: [] };
+    },
+    async getProject(projectIdOrKey) {
+      return { key: projectIdOrKey };
+    },
+    async searchIssues() {
+      return { issues: [] };
+    },
+    async getIssue(issueIdOrKey) {
+      return { key: issueIdOrKey };
+    },
+    async createIssue(fields) {
+      return { fields };
+    },
+    async editIssue(issueIdOrKey, body, query) {
+      return { issueIdOrKey, body, query };
+    },
+    async transitionIssue(issueIdOrKey, body) {
+      return { issueIdOrKey, body };
+    },
+    async addComment(issueIdOrKey, body) {
+      return { issueIdOrKey, body };
+    },
+    async requestByKey(payload) {
+      return payload;
     },
     async request(payload) {
       return {
@@ -45,7 +75,7 @@ function createTestServer() {
     rateLimitWindowMs: 60_000,
     rateLimitMaxRequests: 60,
     createMcpServer: () =>
-      createJiraMcpServer({
+      createMcpServer({
         name: "jira-mcp",
         version: "0.1.0",
         serviceClient

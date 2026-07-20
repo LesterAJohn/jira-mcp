@@ -14,7 +14,7 @@ async function main() {
     return;
   }
 
-  const jiraServiceClient = new JiraServiceClient(env.jira);
+  const jiraServiceClient = new JiraServiceClient(env.targetService ?? env.jira);
 
   const server = createJiraMcpServer({
     name: env.mcpServerName,
